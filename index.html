@@ -237,6 +237,46 @@ main{ text-shadow:0 1px 1px #001a3b }
 .gearbtn{width:40px;height:40px;padding:0!important;display:grid;place-items:center;border-radius:12px!important;font-size:22px!important;color:#b9d8f5!important;background:linear-gradient(180deg,#1b2a3a,#101a27)!important;border:1px solid #38516a!important;box-shadow:inset 0 1px 0 #ffffff18,0 2px 5px #0005}
 .gearbtn:hover{color:#e1f1ff!important;border-color:#7198bd!important;background:linear-gradient(180deg,#243c54,#142538)!important}
 
+
+/* ===== STATISTICS: sections, leader card, Evolution frame ===== */
+.statsec{margin-bottom:18px}
+.statsec .panelhead{letter-spacing:2px}
+.allbtn{background:transparent;border:0;color:#ffe36a;font-weight:900;font-size:13px;letter-spacing:.5px;padding:4px 2px;text-shadow:0 2px 0 #86500b;display:flex;align-items:center;gap:4px}
+.allbtn:active{opacity:.7}
+.leader{margin:14px;border:2px solid #6bbfff88;border-radius:18px;background:linear-gradient(160deg,#0f3769cc,#0a2650dd);overflow:hidden}
+.leader-top{padding:12px 16px;border-bottom:1px solid #6bbfff55;color:#fff;font-size:14px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 0 #082653}
+.leader-body{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 18px}
+.leader-who{display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-width:0;max-width:55%}
+.leader-name{font-size:17px;font-weight:850;line-height:1.2;color:#fff;overflow-wrap:anywhere}
+.leader-val{text-align:right;min-width:0}
+.leader-num{font-size:clamp(52px,16vw,84px);line-height:.95;letter-spacing:-2px}
+.leader-val .small{margin-top:6px;overflow-wrap:anywhere}
+.statsec .statline .pname{flex:1;min-width:0}
+.statsec .statline>div:nth-child(2){min-width:0;flex:1}
+
+/* Evolution frame (skewed purple crystal) */
+.evo{position:relative;width:104px;height:116px;flex:0 0 auto;filter:drop-shadow(0 0 7px #c06bff) drop-shadow(0 0 16px #7b2cff99)}
+.evo-edge,.evo-in,.evo-glow{position:absolute;clip-path:polygon(3% 20%,6% 15%,96% 0,100% 5%,100% 8%,84% 94%,80% 100%,20% 93%,16% 90%)}
+.evo-edge{inset:0;background:linear-gradient(135deg,#f6e4ff 0%,#c77dff 28%,#8a35ff 55%,#d9a6ff 80%,#fff0ff 100%)}
+.evo-in{inset:5px;background:radial-gradient(circle at 25% 20%,#6a2fc8 0,#341074 55%,#1d0a4a 100%);overflow:hidden;display:grid;place-items:center}
+.evo-in:before{content:"";position:absolute;inset:0;background:
+ radial-gradient(1.5px 1.5px at 18% 30%,#fff 50%,transparent 51%),
+ radial-gradient(1px 1px at 70% 18%,#fff 50%,transparent 51%),
+ radial-gradient(1.5px 1.5px at 82% 62%,#e9d1ff 50%,transparent 51%),
+ radial-gradient(1px 1px at 35% 80%,#fff 50%,transparent 51%),
+ radial-gradient(1px 1px at 55% 50%,#e9d1ff 50%,transparent 51%);opacity:.9}
+.evo-in img{position:relative;width:100%;height:100%;object-fit:cover;display:block}
+.evo-ph{position:relative;font-size:46px;font-weight:1000;color:#f1dcff;text-shadow:0 0 12px #c06bff,0 3px 0 #2a0b66}
+.evo-glow{inset:5px;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 52%,#b45cff66 100%),linear-gradient(160deg,#ffffff40 0,transparent 28%)}
+.evo-glow:after{content:""}
+
+/* admin photo field */
+.photo-field{grid-column:1/-1}
+.photorow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.photothumb{width:48px;height:54px;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;background:#341074;border:2px solid #c77dff;border-radius:8px;color:#f1dcff;font-weight:1000;font-size:20px}
+.photothumb img{width:100%;height:100%;object-fit:cover}
+.photobtn{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;font-size:12px;font-weight:900;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -251,7 +291,7 @@ main{ text-shadow:0 1px 1px #001a3b }
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
 const KEY='clashLeagueDataV1';
-const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,crowns:0,buildingDefense:0,favoriteCard:'—',cardUses:0})),rounds:Array.from({length:5},(_,i)=>({name:`Раунд ${i+1}`,matches:[]})),activeRound:0,statsTab:'crowns'});
+const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,crowns:0,buildingDefense:0,favoriteCard:'—',cardUses:0,photo:''})),rounds:Array.from({length:5},(_,i)=>({name:`Раунд ${i+1}`,matches:[]})),activeRound:0,statsView:'all'});
 let data;try{data=JSON.parse(localStorage.getItem(KEY))||defaults()}catch{data=defaults()}
 let isAdmin=false,activeTab='table';
 const $=s=>document.querySelector(s);
@@ -283,7 +323,7 @@ function renderAdminWorkspace(){
 function adminPlayersForm(){return `<h3>Участники и очки рейтинга</h3><p class="hint">Изменяй имена, очки сезона и общий рейтинг.</p>${data.players.map(p=>`<div class="adminsection"><b>Игрок ${p.id}</b><div class="formgrid"><div class="field"><label>ИМЯ</label><input data-p="${p.id}" data-k="name" value="${esc(p.name)}"></div><div class="field"><label>ОЧКИ СЕЗОНА</label><input type="number" min="0" data-p="${p.id}" data-k="season" value="${p.season}"></div><div class="field"><label>ВСЕГО ЗА ИСТОРИЮ</label><input type="number" min="0" data-p="${p.id}" data-k="total" value="${p.total}"></div></div></div>`).join('')}<div class="actions"><button class="primary" id="savePlayersInline">СОХРАНИТЬ УЧАСТНИКОВ</button></div>`}
 function adminRoundsForm(){return `<h3>Раунды и матчи</h3><div class="admin-round-tools"><div class="field"><label>ВЫБЕРИТЕ РАУНД</label><select id="inlineRound">${data.rounds.map((r,i)=>`<option value="${i}" ${i===(window.inlineRoundIndex||0)?'selected':''}>${esc(r.name)}</option>`).join('')}</select></div><div class="field"><label>НАЗВАНИЕ РАУНДА</label><input id="inlineRoundName" value="${esc(data.rounds[window.inlineRoundIndex||0]?.name||'')}"></div></div><div id="inlineMatches">${inlineMatchRows(window.inlineRoundIndex||0)}</div><div class="actions"><button class="secondary" id="inlineAddMatch">+ ДОБАВИТЬ МАТЧ</button><button class="primary" id="inlineSaveRounds">СОХРАНИТЬ РАУНД</button></div><p class="hint">Вводи количество корон. Победа — 3 очка, ничья — 1, поражение — 0.</p>`}
 function inlineMatchRows(idx){let matches=data.rounds[idx]?.matches||[];return matches.map((m,i)=>`<div class="adminsection formgrid"><div class="field"><label>ИГРОК 1</label><select data-im="${i}" data-k="a">${data.players.map(p=>`<option value="${p.id}" ${p.id==m.a?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div><div class="field"><label>ИГРОК 2</label><select data-im="${i}" data-k="b">${data.players.map(p=>`<option value="${p.id}" ${p.id==m.b?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div><div class="field"><label>КОРОНЫ ИГРОКА 1</label><input type="number" min="0" data-im="${i}" data-k="sa" value="${m.sa??''}"></div><div class="field"><label>КОРОНЫ ИГРОКА 2</label><input type="number" min="0" data-im="${i}" data-k="sb" value="${m.sb??''}"></div><button class="secondary danger" data-inline-del="${i}">УДАЛИТЬ МАТЧ</button></div>`).join('')||'<p class="hint">В этом раунде пока нет матчей.</p>'}
-function adminStatsForm(){return `<h3>Статистика игроков</h3><p class="hint">Обновляй показатели после матчей.</p>${data.players.map(p=>`<div class="adminsection"><b>${esc(p.name)}</b><div class="formgrid"><div class="field"><label>КОРОНЫ</label><input type="number" min="0" data-statp="${p.id}" data-k="crowns" value="${p.crowns||0}"></div><div class="field"><label>ЗАЩИЩЁННЫЕ ЗДАНИЯ</label><input type="number" min="0" data-statp="${p.id}" data-k="buildingDefense" value="${p.buildingDefense||0}"></div><div class="field"><label>САМАЯ ИСПОЛЬЗУЕМАЯ КАРТА</label><input data-statp="${p.id}" data-k="favoriteCard" value="${esc(p.favoriteCard||'')}"></div><div class="field"><label>ИСПОЛЬЗОВАНИЙ КАРТЫ</label><input type="number" min="0" data-statp="${p.id}" data-k="cardUses" value="${p.cardUses||0}"></div></div></div>`).join('')}<div class="actions"><button class="primary" id="saveStatsInline">СОХРАНИТЬ СТАТИСТИКУ</button></div>`}
+function adminStatsForm(){return `<h3>Статистика игроков</h3><p class="hint">Обновляй показатели после матчей.</p>${data.players.map(p=>`<div class="adminsection"><b>${esc(p.name)}</b><div class="formgrid"><div class="field"><label>КОРОНЫ</label><input type="number" min="0" data-statp="${p.id}" data-k="crowns" value="${p.crowns||0}"></div><div class="field"><label>ЗАЩИЩЁННЫЕ ЗДАНИЯ</label><input type="number" min="0" data-statp="${p.id}" data-k="buildingDefense" value="${p.buildingDefense||0}"></div><div class="field"><label>САМАЯ ИСПОЛЬЗУЕМАЯ КАРТА</label><input data-statp="${p.id}" data-k="favoriteCard" value="${esc(p.favoriteCard||'')}"></div><div class="field"><label>ИСПОЛЬЗОВАНИЙ КАРТЫ</label><input type="number" min="0" data-statp="${p.id}" data-k="cardUses" value="${p.cardUses||0}"></div><div class="field photo-field"><label>ФОТО ДЛЯ РАМКИ ЭВОЛЮЦИИ</label><div class="photorow"><span class="photothumb">${p.photo?`<img src="${esc(p.photo)}" alt="">`:esc(initial(p.name))}</span><label class="secondary photobtn" for="ph${p.id}">ЗАГРУЗИТЬ ФОТО</label><input class="hidden" type="file" accept="image/*" id="ph${p.id}" data-photo="${p.id}">${p.photo?`<button class="secondary danger photobtn" type="button" data-photo-del="${p.id}">УБРАТЬ</button>`:''}</div></div></div></div>`).join('')}<div class="actions"><button class="primary" id="saveStatsInline">СОХРАНИТЬ СТАТИСТИКУ</button></div>`}
 function adminRatingForm(){return `<h3>Рейтинг турнира</h3><p class="hint">Здесь можно вручную скорректировать сезонные и исторические очки.</p><div class="tablewrap"><table class="ratingtable"><thead><tr><th>#</th><th>ИГРОК</th><th>СЕЗОН</th><th>ВСЕГО</th></tr></thead><tbody>${data.players.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td><input style="width:66px" type="number" min="0" data-rp="${p.id}" data-k="season" value="${p.season}"></td><td><input style="width:66px" type="number" min="0" data-rp="${p.id}" data-k="total" value="${p.total}"></td></tr>`).join('')}</tbody></table></div><div class="actions"><button class="primary" id="saveRatingInline">СОХРАНИТЬ РЕЙТИНГ</button></div>`}
 function adminSettingsForm(){return `<h3>Настройки и резервная копия</h3><div class="field"><label>НОВЫЙ КОД РАЗРАБОТЧИКА</label><input id="newpin" type="password" placeholder="Минимум 4 символа"></div><div class="actions"><button class="secondary" id="savepin">ИЗМЕНИТЬ КОД</button><button class="secondary" id="export">ЭКСПОРТ JSON</button><label class="secondary" for="importfile">ИМПОРТ JSON</label><input class="hidden" id="importfile" type="file" accept="application/json"></div><p class="hint">Данные хранятся в браузере. Для синхронизации между устройствами понадобится серверная база данных. Код доступа в статическом сайте не является полноценной защитой.</p>`}
 function bindAdminWorkspace(){
@@ -292,6 +332,10 @@ function bindAdminWorkspace(){
  $('#adminExit').onclick=()=>{isAdmin=false;render()};
  const saveFields=(selector,fieldAttr='data-p')=>{area.querySelectorAll(selector).forEach(i=>{let id=i.getAttribute(fieldAttr),p=player(id);if(p)p[i.dataset.k]=i.dataset.k==='name'||i.dataset.k==='favoriteCard'?i.value:Math.max(0,+i.value||0)});save();render()};
  const sp=$('#savePlayersInline');if(sp)sp.onclick=()=>saveFields('[data-p]');
+ const applyStatFields=()=>area.querySelectorAll('[data-statp]').forEach(i=>{const p=player(i.getAttribute('data-statp'));if(p)p[i.dataset.k]=i.dataset.k==='favoriteCard'?i.value:Math.max(0,+i.value||0)});
+ const readPhoto=file=>new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{const S=360,k=Math.min(1,S/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};img.src=fr.result};fr.readAsDataURL(file)});
+ area.querySelectorAll('[data-photo]').forEach(inp=>inp.onchange=async()=>{const f=inp.files[0];if(!f)return;try{const url=await readPhoto(f);applyStatFields();player(inp.dataset.photo).photo=url;save();render()}catch{alert('Не удалось загрузить фото')}});
+ area.querySelectorAll('[data-photo-del]').forEach(b=>b.onclick=()=>{applyStatFields();player(b.dataset.photoDel).photo='';save();render()});
  const ss=$('#saveStatsInline');if(ss)ss.onclick=()=>saveFields('[data-statp]','data-statp');
  const sr=$('#saveRatingInline');if(sr)sr.onclick=()=>saveFields('[data-rp]','data-rp');
  if($('#inlineRound'))$('#inlineRound').onchange=()=>{window.inlineRoundIndex=+$('#inlineRound').value;adminTab='rounds';render()};
@@ -304,10 +348,32 @@ function bindAdminWorkspace(){
 }
 function renderTable(){let idx=data.activeRound||0,r=data.rounds[idx];let standingsRows=standings(idx);return title('ШВЕЙЦАРСКАЯ СИСТЕМА','ТАБЛИЦА',`Раунд ${idx+1} из ${data.rounds.length}`)+`<div class="stagebar">${data.rounds.map((r,i)=>`<button class="${i===idx?'active':''}" data-round="${i}">${esc(r.name)}</button>`).join('')}</div><section class="panel"><div class="panelhead"><span>МЕСТО • ИГРОК</span><span>ОЧКИ</span></div><div class="rows">${standingsRows.map((x,i)=>`<div class="rowitem"><div class="rank">${i+1}</div><div><div class="pname">${esc(player(x.id).name)}</div><div class="small">${x.w} побед • ${x.l} поражений • ${x.for}:${x.against}</div></div><div class="points">${x.pts}</div></div>`).join('')}</div></section><div style="height:18px"></div><section class="panel"><div class="panelhead"><span>${esc(r.name).toUpperCase()} • МАТЧИ</span><span>${r.matches.length} матч.</span></div>${r.matches.length?r.matches.map((m,i)=>`<div class="match"><div class="matchtop"><span>МАТЧ ${i+1}</span><span>${m.sa===''||m.sb===''?'ОЖИДАЕТСЯ':'ЗАВЕРШЁН'}</span></div><div class="versus"><div class="team">${esc(player(m.a)?.name||'Игрок')}</div><div class="score ${m.sa===''||m.sb===''?'pending':''}">${m.sa===''||m.sb===''?'VS':`${esc(m.sa)}:${esc(m.sb)}`}</div><div class="team">${esc(player(m.b)?.name||'Игрок')}</div></div></div>`).join(''):'<div class="empty">Матчи этого раунда пока не добавлены.</div>'}</section>`}
 function renderPlayers(){return title('СОСТАВ ТУРНИРА','УЧАСТНИКИ','16 игроков')+`<div class="cards">${data.players.map(p=>`<article class="playercard"><div class="num">УЧАСТНИК ${String(p.id).padStart(2,'0')}</div><h3>${esc(p.name)}</h3><p>${totalWins(p.id)} побед • ${p.crowns} корон</p></article>`).join('')}</div>`}
-function renderStats(){let key=data.statsTab||'crowns';let labels={crowns:'ЛИДЕР ПО КОРОНАМ',defense:'ЛУЧШАЯ ЗАЩИТА ЗДАНИЙ',card:'САМАЯ ПОПУЛЯРНАЯ КАРТА'};let sorted=[...data.players].sort((a,b)=>key==='crowns'?b.crowns-a.crowns:key==='defense'?b.buildingDefense-a.buildingDefense:b.cardUses-a.cardUses);let best=sorted[0];let value=key==='crowns'?best.crowns:key==='defense'?best.buildingDefense:best.cardUses;return title('РЕЙТИНГ ИГРОКОВ','СТАТИСТИКА','Авторасчёт')+`<div class="subtabs">${[['crowns','КOРОНЫ'],['defense','ЗАЩИТА'],['card','КАРТЫ']].map(([k,v])=>`<button data-stat="${k}" class="${k===key?'active':''}">${v}</button>`).join('')}</div><section class="panel"><div class="panelhead"><span>${labels[key]}</span><span>ЛИДЕР</span></div><div class="statline"><div><div class="small">1 МЕСТО • ${esc(best.name)}</div><div class="statbig">${key==='card'?esc(best.favoriteCard):value}</div><div class="small">${key==='crowns'?'корон':key==='defense'?'защищённых зданий':`${value} использований`}</div></div><div class="value">${key==='card'?value+'×':'🏆'}</div></div>${sorted.map((p,i)=>`<div class="statline"><div class="rank">${i+1}</div><div><div class="pname">${esc(p.name)}</div><div class="small">${key==='card'?esc(p.favoriteCard):key==='crowns'?'Короны':'Защита зданий'}</div></div><div class="value">${key==='card'?p.cardUses:key==='crowns'?p.crowns:p.buildingDefense}</div></div>`).join('')}</section>`}
+const STAT_DEFS={
+ crowns:{tab:'КОРОНЫ',title:'ЛИДЕР ПО КОРОНАМ',val:p=>p.crowns||0,cap:()=>'корон',row:()=>'Короны'},
+ defense:{tab:'ЗАЩИТА ЗДАНИЙ',title:'ЛУЧШАЯ ЗАЩИТА ЗДАНИЙ',val:p=>p.buildingDefense||0,cap:()=>'защищённых зданий',row:()=>'Защита зданий'},
+ card:{tab:'КАРТЫ',title:'САМАЯ ПОПУЛЯРНАЯ КАРТА',val:p=>p.cardUses||0,cap:p=>`${esc(p.favoriteCard||'—')} • использований`,row:p=>esc(p.favoriteCard||'—')}
+};
+const initial=n=>{const t=String(n||'').trim();return t?t[0].toUpperCase():'?'};
+function evoFrame(p){return `<div class="evo"><div class="evo-edge"></div><div class="evo-in">${p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="evo-ph">${esc(initial(p.name))}</span>`}</div><div class="evo-glow"></div></div>`}
+function statSection(key,full){
+ const d=STAT_DEFS[key];
+ const sorted=[...data.players].sort((a,b)=>d.val(b)-d.val(a));
+ const best=sorted[0];
+ const rows=sorted.slice(1,full?sorted.length:5);
+ return `<section class="panel statsec"><div class="panelhead"><span>${d.tab}</span>${full?'':`<button class="allbtn" data-stat="${key}">Все ›</button>`}</div>`+
+ `<div class="leader"><div class="leader-top">${d.title}</div><div class="leader-body"><div class="leader-who">${evoFrame(best)}<div class="leader-name">${esc(best.name)}</div></div><div class="leader-val"><div class="statbig leader-num">${d.val(best)}</div><div class="small">${d.cap(best)}</div></div></div></div>`+
+ rows.map((p,i)=>`<div class="statline"><div class="rank">${i+2}</div><div><div class="pname">${esc(p.name)}</div><div class="small">${d.row(p)}</div></div><div class="value">${d.val(p)}</div></div>`).join('')+
+ `</section>`;
+}
+function renderStats(){
+ const view=data.statsView||'all';
+ const keys=view==='all'?['crowns','defense','card']:[view];
+ const tabs=[['all','ВСЕ'],['crowns','КОРОНЫ'],['defense','ЗАЩИТА'],['card','КАРТЫ']];
+ return title('РЕЙТИНГ ИГРОКОВ','СТАТИСТИКА','Авторасчёт')+`<div class="subtabs">${tabs.map(([k,v])=>`<button data-stat="${k}" class="${k===view?'active':''}">${v}</button>`).join('')}</div>`+keys.map(k=>statSection(k,view!=='all')).join('');
+}
 function renderRating(){let arr=[...data.players].sort((a,b)=>b.season-a.season||b.total-a.total);return title('ИСТОРИЯ СОРЕВНОВАНИЯ','РЕЙТИНГ','16 игроков')+`<section class="panel tablewrap"><table class="ratingtable"><thead><tr><th>#</th><th>ИГРОК</th><th>СЕЗОН</th><th>ВСЕГО</th></tr></thead><tbody>${arr.map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(p.name)}</b></td><td><strong>${p.season}</strong></td><td><strong>${p.total}</strong></td></tr>`).join('')}</tbody></table></section><p class="hint">Очки за текущий сезон и общая сумма редактируются в режиме разработчика.</p>`}
 $('#nav').addEventListener('click',e=>{let b=e.target.closest('[data-tab]');if(!b)return;activeTab=b.dataset.tab;document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x===b));render()});
-$('#app').addEventListener('click',e=>{let r=e.target.closest('[data-round]'),s=e.target.closest('[data-stat]');if(r){data.activeRound=+r.dataset.round;save();render()}if(s){data.statsTab=s.dataset.stat;render()}});
+$('#app').addEventListener('click',e=>{let r=e.target.closest('[data-round]'),s=e.target.closest('[data-stat]');if(r){data.activeRound=+r.dataset.round;save();render()}if(s){data.statsView=s.dataset.stat;render();window.scrollTo({top:0,behavior:'smooth'})}});
 function openModal(html){$('#sheet').innerHTML=html;$('#modal').classList.add('show')}
 function closeModal(){$('#modal').classList.remove('show')}
 $('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))closeModal()});
