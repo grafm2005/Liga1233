@@ -337,6 +337,31 @@ body.admin .adminbar{display:flex}
 body.admin main{padding-bottom:200px}
 @media(min-width:700px){.adminbar{bottom:18px}}
 
+
+/* ===== TABLE: round switcher + Swiss groups ===== */
+.roundnav{display:flex;align-items:center;gap:8px;margin:4px 0 18px;padding:6px;border-radius:16px;background:linear-gradient(#fff08a,#ffc32e 55%,#ed8b12);border:2px solid #fff0a0;box-shadow:inset 0 2px 0 #ffffffaa,0 4px 0 #9a4d08,0 8px 16px #00173577}
+.rn-label{flex:1;text-align:center;font-size:19px;font-weight:1000;letter-spacing:1.5px;color:#75400b;text-shadow:0 1px #fff6;text-transform:uppercase;user-select:none}
+.rn-arrow{width:54px;height:46px;flex:0 0 auto;display:grid;place-items:center;padding:0;border:2px solid #8bcfff;border-radius:12px;background:linear-gradient(#347fc4,#155093);color:#fff;box-shadow:inset 0 2px 0 #ffffff55,0 3px 0 #08264e}
+.rn-arrow svg{width:22px;height:22px;display:block}
+.rn-arrow:active{transform:translateY(2px);box-shadow:inset 0 2px 0 #ffffff55,0 1px 0 #08264e}
+.rn-arrow:disabled{opacity:.35;cursor:default;transform:none;box-shadow:none}
+.grp{margin-bottom:18px}
+.grp .panelhead{padding:12px 18px}
+.grp .rec{font-size:26px;line-height:1;font-weight:1000;letter-spacing:1px;color:#ffe36a;text-shadow:0 2px 0 #86500b}
+.grp .grouptag{font-size:11px;letter-spacing:1.5px;color:#d7ebff}
+.pair{padding:13px 16px}
+.versus .team.win{color:#ffe36a}
+.listrow{padding:15px 18px;border-bottom:1px solid #77b9ed55;font-weight:850;font-size:16px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listrow:last-child{border-bottom:0}
+.listrow.edit{padding:10px 14px;overflow:visible}
+.panel.gold{border:3px solid #ffd33d;box-shadow:inset 0 2px 0 #fff3a566,0 5px 0 #8a5206,0 10px 26px #ffc83d55}
+.panel.gold .panelhead{background:linear-gradient(180deg,#7a5c10,#4a370a);border-bottom:2px solid #ffd33d99}
+.panel.gold .grouptag{color:#ffe36a}
+.panel.red{border:3px solid #ff5470;box-shadow:inset 0 2px 0 #ffc2cb55,0 5px 0 #6d1428,0 10px 26px #ff405d55}
+.panel.red .panelhead{background:linear-gradient(180deg,#7d2236,#4a1020);border-bottom:2px solid #ff547099}
+.panel.red .rec{color:#ff9aab;text-shadow:0 2px 0 #5a1020}
+.panel.red .grouptag{color:#ffb3bf}
+
 </style>
 </head>
 <body>
@@ -352,17 +377,26 @@ body.admin main{padding-bottom:200px}
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
 const KEY='clashLeagueDataV1';
-const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,crowns:0,buildingDefense:0,favoriteCard:'—',cardUses:0,photo:'',nick:''})),rounds:Array.from({length:5},(_,i)=>({name:`Раунд ${i+1}`,matches:[]})),activeRound:0,statsView:'all'});
-let data;try{data=JSON.parse(localStorage.getItem(KEY))||defaults()}catch{data=defaults()}
+const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,crowns:0,buildingDefense:0,favoriteCard:'—',cardUses:0,photo:'',nick:''})),activeRound:0,statsView:'all'});
+const SWISS_STRUCT=[
+ [{rec:'0:0',pairs:8}],
+ [{rec:'1:0',pairs:4},{rec:'0:1',pairs:4}],
+ [{rec:'2:0',pairs:2},{rec:'1:1',pairs:4},{rec:'0:2',pairs:2}],
+ [{rec:'3:0',list:2,kind:'gold'},{rec:'2:1',pairs:3},{rec:'1:2',pairs:3},{rec:'0:3',list:2,kind:'red'}],
+ [{rec:'3:1',list:3,kind:'gold'},{rec:'2:2',pairs:3},{rec:'1:3',list:3,kind:'red'}],
+ [{rec:'3:2',list:3,kind:'gold'},{rec:'2:3',list:3,kind:'red'}]
+];
+const defaultSwiss=()=>SWISS_STRUCT.map(r=>r.map(g=>g.pairs?{rec:g.rec,pairs:Array.from({length:g.pairs},()=>({a:0,b:0,sa:'',sb:''}))}:{rec:g.rec,kind:g.kind,list:Array(g.list).fill(0)}));
+const ensure=d=>{if(!Array.isArray(d.swiss)||d.swiss.length!==SWISS_STRUCT.length)d.swiss=defaultSwiss();return d};
+let data;try{data=ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{data=ensure(defaults())}
 let isAdmin=false,activeTab='table',dirty=false;
 const $=s=>document.querySelector(s);
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const player=id=>data.players.find(p=>p.id===Number(id));
-const totalWins=id=>data.rounds.flatMap(r=>r.matches).filter(m=>(m.a==id&&Number(m.sa)>Number(m.sb))||(m.b==id&&Number(m.sb)>Number(m.sa))).length;
-function standings(roundIndex){let ids=data.players.map(p=>p.id);let rows=ids.map(id=>({id,pts:0,w:0,l:0,draw:0,crowns:0,for:0,against:0}));let played=data.rounds.slice(0,roundIndex+1).flatMap(r=>r.matches);played.forEach(m=>{if(m.sa===''||m.sb===''||m.sa==null||m.sb==null)return;let a=rows.find(x=>x.id==m.a),b=rows.find(x=>x.id==m.b);if(!a||!b)return;let x=+m.sa,y=+m.sb;a.for+=x;a.against+=y;b.for+=y;b.against+=x;if(x>y){a.w++;a.pts+=3;b.l++}else if(y>x){b.w++;b.pts+=3;a.l++}else{a.draw++;b.draw++;a.pts++;b.pts++}});return rows.sort((a,b)=>b.pts-a.pts||(b.for-b.against)-(a.for-a.against)||b.for-a.for)}
+const totalWins=id=>data.swiss.flat().flatMap(g=>g.pairs||[]).filter(m=>m.sa!==''&&m.sb!==''&&m.sa!=null&&m.sb!=null&&((m.a==id&&Number(m.sa)>Number(m.sb))||(m.b==id&&Number(m.sb)>Number(m.sa)))).length;
 function title(eyebrow,heading,right=''){return `<div class="heading"><div>${eyebrow?`<div class="eyebrow">${eyebrow}</div>`:''}<h1>${heading}</h1></div><div class="count">${right}</div></div>`}
-const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||defaults()}catch{return defaults()}};
+const load=()=>{try{return ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{return ensure(defaults())}};
 const nickOf=p=>p.nick||`Никнейм ${p.id}`;
 const initial=n=>{const t=String(n||'').trim();return t?t[0].toUpperCase():'?'};
 const mark=()=>{dirty=true;const m=$('#adminMsg');if(m)m.classList.remove('ok');updateBar()};
@@ -371,13 +405,13 @@ const rerender=()=>{const y=window.scrollY;render();window.scrollTo(0,y)};
 /* ---------- editing helpers ---------- */
 const editBanner=()=>isAdmin?`<div class="editbanner"><span class="pen">✎</span><span>Режим разработчика: нажимай на поля с золотой пунктирной рамкой, меняй данные и жми «СОХРАНИТЬ» внизу.</span></div>`:'';
 const edText=(ed,val,cls='',ph='')=>`<span class="ed-wrap"><input class="ed ${cls}" data-ed="${ed}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></span>`;
-const edNum=(ed,val,cls='')=>`<span class="ed-wrap ${cls==='sm'?'inl':''} ${cls==='score'?'scorew':''}"><input class="ed ${cls}" type="number" inputmode="numeric" min="0" data-ed="${ed}" value="${esc(val)}"></span>`;
-const playerSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed" data-ed="${ed}">${data.players.map(p=>`<option value="${p.id}" ${p.id==sel?'selected':''}>${esc(p.name)}</option>`).join('')}</select></span>`;
+const edNum=(ed,val,cls='')=>`<span class="ed-wrap ${cls==='sm'?'inl':''} ${cls==='score'?'scorew':''}"><input class="ed ${cls}" type="number" inputmode="numeric" min="0" data-ed="${ed}" value="${esc(val)}" ${cls==='score'?'placeholder="короны"':''}></span>`;
+const playerSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed" data-ed="${ed}"><option value="0">— выбрать —</option>${data.players.map(p=>`<option value="${p.id}" ${p.id==sel?'selected':''}>${esc(nickOf(p))}</option>`).join('')}</select></span>`;
 function applyEd(el){
- const [t,a,b,c]=el.dataset.ed.split(':'),v=el.value;
+ const [t,a,b,c,d]=el.dataset.ed.split(':'),v=el.value;
  if(t==='p'){const p=player(a);if(!p)return;p[b]=['name','nick','favoriteCard'].includes(b)?v:Math.max(0,+v||0)}
- else if(t==='m'){const m=data.rounds[+a]?.matches[+b];if(!m)return;m[c]=['a','b'].includes(c)?+v:v;const s=$('#standRows');if(s)s.innerHTML=standRows(data.activeRound||0)}
- else if(t==='r'){data.rounds[+a].name=v}
+ else if(t==='s'){const m=data.swiss[+a]?.[+b]?.pairs?.[+c];if(!m)return;m[d]=['a','b'].includes(d)?+v:v}
+ else if(t==='l'){const g=data.swiss[+a]?.[+b];if(g&&g.list)g.list[+c]=+v}
 }
 function readPhoto(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{const S=360,k=Math.min(1,S/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};img.src=fr.result};fr.readAsDataURL(file)})}
 function photoEdit(p){return `<div class="photoedit"><label class="phbtn" for="ph${p.id}" title="Загрузить фото"><span class="photothumb">${p.photo?`<img src="${esc(p.photo)}" alt="">`:esc(initial(p.name))}</span><span class="phpen">✎</span></label><input class="hidden" type="file" accept="image/*" id="ph${p.id}" data-photo="${p.id}">${p.photo?`<button class="phdel" type="button" data-photo-del="${p.id}" title="Убрать фото">✕</button>`:''}<span class="small">фото для рамки Эволюции</span></div>`}
@@ -403,17 +437,30 @@ function exitAdmin(){
 }
 
 /* ---------- tabs ---------- */
-function standRows(idx){return standings(idx).map((x,i)=>`<div class="rowitem"><div class="rank">${i+1}</div><div><div class="pname">${esc(player(x.id).name)}</div><div class="small">${x.w} побед • ${x.l} поражений • ${x.for}:${x.against}</div></div><div class="points">${x.pts}</div></div>`).join('')}
-function adminMatches(idx){
- const r=data.rounds[idx];
- return `<div class="matchedit"><div class="edlabel">НАЗВАНИЕ РАУНДА</div>${edText(`r:${idx}:name`,r.name)}</div>`+
- (r.matches.map((m,i)=>`<div class="match matchedit"><div class="matchtop"><span>МАТЧ ${i+1}</span><button class="secondary danger mini" data-mdel="${i}">УДАЛИТЬ</button></div><div class="mrow"><div class="mside">${playerSelect(`m:${idx}:${i}:a`,m.a)}${edNum(`m:${idx}:${i}:sa`,m.sa??'','score')}</div><div class="vs">VS</div><div class="mside">${playerSelect(`m:${idx}:${i}:b`,m.b)}${edNum(`m:${idx}:${i}:sb`,m.sb??'','score')}</div></div></div>`).join('')||'<div class="empty">В этом раунде пока нет матчей.</div>')+
- `<div class="matchedit"><button class="secondary addmatch" id="addMatch">+ ДОБАВИТЬ МАТЧ</button><p class="hint" style="margin:10px 0 0">Вводи короны каждого игрока. Победа — 3 очка, ничья — 1, поражение — 0.</p></div>`;
+const plural=(n,one,few,many)=>n===1?one:(n>=2&&n<=4)?few:many;
+const pn=id=>{const p=player(id);return p?esc(nickOf(p)):'—'};
+function renderGroup(r,gi,g){
+ const isList=Array.isArray(g.list),kind=g.kind||'';
+ const tag=kind==='gold'?'ПРОШЛИ ДАЛЬШЕ':kind==='red'?'ВЫБЫЛИ':`${g.pairs.length} ${plural(g.pairs.length,'пара','пары','пар')}`;
+ let body;
+ if(isList){
+  body=g.list.map((id,i)=>isAdmin?`<div class="listrow edit">${playerSelect(`l:${r}:${gi}:${i}`,id)}</div>`:`<div class="listrow">${pn(id)}</div>`).join('');
+ }else{
+  body=g.pairs.map((m,i)=>{
+   if(isAdmin)return `<div class="match matchedit"><div class="mrow"><div class="mside">${playerSelect(`s:${r}:${gi}:${i}:a`,m.a)}${edNum(`s:${r}:${gi}:${i}:sa`,m.sa??'','score')}</div><div class="vs">VS</div><div class="mside">${playerSelect(`s:${r}:${gi}:${i}:b`,m.b)}${edNum(`s:${r}:${gi}:${i}:sb`,m.sb??'','score')}</div></div></div>`;
+   const done=m.sa!==''&&m.sb!==''&&m.sa!=null&&m.sb!=null;
+   const wa=done&&+m.sa>+m.sb,wb=done&&+m.sb>+m.sa;
+   return `<div class="match pair"><div class="versus"><div class="team ${wa?'win':''}">${pn(m.a)}</div><div class="score ${done?'':'pending'}">${done?`${esc(m.sa)}:${esc(m.sb)}`:'VS'}</div><div class="team ${wb?'win':''}">${pn(m.b)}</div></div></div>`;
+  }).join('');
+ }
+ return `<section class="panel grp ${kind}"><div class="panelhead"><span class="rec">${g.rec}</span><span class="grouptag">${tag}</span></div>${body}</section>`;
 }
+const chev=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="${d<0?'15 5 8 12 15 19':'9 5 16 12 9 19'}"/></svg>`;
 function renderTable(){
- let idx=data.activeRound||0;if(idx>=data.rounds.length)idx=0;let r=data.rounds[idx];
- const matchesHtml=isAdmin?adminMatches(idx):(r.matches.length?r.matches.map((m,i)=>`<div class="match"><div class="matchtop"><span>МАТЧ ${i+1}</span><span>${m.sa===''||m.sb===''?'ОЖИДАЕТСЯ':'ЗАВЕРШЁН'}</span></div><div class="versus"><div class="team">${esc(player(m.a)?.name||'Игрок')}</div><div class="score ${m.sa===''||m.sb===''?'pending':''}">${m.sa===''||m.sb===''?'VS':`${esc(m.sa)}:${esc(m.sb)}`}</div><div class="team">${esc(player(m.b)?.name||'Игрок')}</div></div></div>`).join(''):'<div class="empty">Матчи этого раунда пока не добавлены.</div>');
- return title('ШВЕЙЦАРСКАЯ СИСТЕМА','ТАБЛИЦА',`Раунд ${idx+1} из ${data.rounds.length}`)+editBanner()+`<div class="stagebar">${data.rounds.map((r,i)=>`<button class="${i===idx?'active':''}" data-round="${i}">${esc(r.name)}</button>`).join('')}</div><section class="panel"><div class="panelhead"><span>МЕСТО • ИГРОК</span><span>ОЧКИ</span></div><div class="rows" id="standRows">${standRows(idx)}</div></section><div style="height:18px"></div><section class="panel"><div class="panelhead"><span>${esc(r.name).toUpperCase()} • МАТЧИ</span><span>${r.matches.length} матч.</span></div>${matchesHtml}</section>`;
+ const last=data.swiss.length-1;
+ let idx=Math.max(0,Math.min(last,+data.activeRound||0));data.activeRound=idx;
+ const nav=`<div class="roundnav"><button class="rn-arrow" data-rnav="-1" aria-label="Предыдущий раунд" ${idx===0?'disabled':''}>${chev(-1)}</button><div class="rn-label">${idx+1} раунд</div><button class="rn-arrow" data-rnav="1" aria-label="Следующий раунд" ${idx===last?'disabled':''}>${chev(1)}</button></div>`;
+ return title('ШВЕЙЦАРСКАЯ СИСТЕМА','ТАБЛИЦА',`Раунд ${idx+1} из ${last+1}`)+editBanner()+nav+data.swiss[idx].map((g,gi)=>renderGroup(idx,gi,g)).join('');
 }
 function renderPlayers(){
  return title('','УЧАСТНИКИ','16 игроков')+editBanner()+`<div class="cards">${data.players.map(p=>isAdmin?
@@ -466,18 +513,15 @@ app.addEventListener('input',onEdit);
 app.addEventListener('change',async e=>{
  const el=e.target;if(!isAdmin)return;
  if(el.dataset&&el.dataset.photo){const f=el.files[0];if(!f)return;try{const url=await readPhoto(f);player(el.dataset.photo).photo=url;mark();rerender()}catch{alert('Не удалось загрузить фото')}return}
- if(el.id==='importfile'){try{const f=el.files[0];if(!f)return;const obj=JSON.parse(await f.text());if(!obj.players||!obj.rounds)throw Error();data=obj;save();dirty=false;render();alert('Данные импортированы')}catch{alert('Не удалось прочитать резервную копию')}return}
+ if(el.id==='importfile'){try{const f=el.files[0];if(!f)return;const obj=JSON.parse(await f.text());if(!obj.players)throw Error();data=ensure(obj);save();dirty=false;render();alert('Данные импортированы')}catch{alert('Не удалось прочитать резервную копию')}return}
  onEdit(e);
 });
 app.addEventListener('click',e=>{
  const t=e.target;
- const r=t.closest('[data-round]'),s=t.closest('[data-stat]');
- if(r){data.activeRound=+r.dataset.round;render()}
+ const rn=t.closest('[data-rnav]'),s=t.closest('[data-stat]');
+ if(rn&&!rn.disabled){data.activeRound=(+data.activeRound||0)+(+rn.dataset.rnav);render();window.scrollTo({top:0,behavior:'smooth'})}
  if(s){data.statsView=s.dataset.stat;render();window.scrollTo({top:0,behavior:'smooth'})}
  if(!isAdmin)return;
- const md=t.closest('[data-mdel]');
- if(md){data.rounds[data.activeRound||0].matches.splice(+md.dataset.mdel,1);mark();rerender();return}
- if(t.closest('#addMatch')){data.rounds[data.activeRound||0].matches.push({a:1,b:2,sa:'',sb:''});mark();rerender();return}
  const pd=t.closest('[data-photo-del]');
  if(pd){player(pd.dataset.photoDel).photo='';mark();rerender();return}
  if(t.closest('#savepin')){const v=$('#newpin').value;if(v.length<4)return alert('Минимум 4 символа');localStorage.setItem('clashDevPin',v);$('#newpin').value='';alert('Код изменён');return}
