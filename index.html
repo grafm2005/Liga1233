@@ -410,6 +410,32 @@ body.admin main{padding-bottom:200px}
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
 const KEY='clashLeagueDataV1';
+// Supabase: shared cloud storage for the league state.
+const SUPABASE_URL='https://xpccdcuhrvgppretdkhs.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_Vzzhke-PcW6yfLL-Z2KzFA_22koAAso';
+const SUPABASE_TABLE='clash_league_state';
+const SUPABASE_ROW_ID='main';
+let cloudStatus='Подключение к облаку…';
+let lastSavedData=null;
+const cloudHeaders=()=>({'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'});
+async function cloudRead(){
+ const r=await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${encodeURIComponent(SUPABASE_ROW_ID)}&select=payload`,{headers:cloudHeaders()});
+ if(!r.ok)throw new Error(`Supabase read: ${r.status} ${await r.text()}`);
+ const rows=await r.json();return rows.length?rows[0].payload:null;
+}
+async function cloudWrite(value){
+ const r=await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`,{method:'POST',headers:{...cloudHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:SUPABASE_ROW_ID,payload:value,updated_at:new Date().toISOString()})});
+ if(!r.ok)throw new Error(`Supabase save: ${r.status} ${await r.text()}`);
+}
+async function initCloud(){
+ try{
+  const remote=await cloudRead();
+  if(remote){data=ensure(remote);localStorage.setItem(KEY,JSON.stringify(data));}
+  else {await cloudWrite(data);}
+  lastSavedData=JSON.parse(JSON.stringify(data));cloudStatus='☁ Облако подключено';
+ }catch(err){cloudStatus='⚠ Облако недоступно — проверь SQL и подключение';console.error(err);}
+ render();
+}
 const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,photo:'',nick:''})),activeRound:0,statsView:'all'});
 const CARDS=["Лучницы", "Стрелы", "Огненный шар", "Гигант", "Рыцарь", "Мини-П.Е.К.К.А.", "Миньоны", "Мушкетёр", "Хижина гоблинов", "Гоблины", "Гоблины-копейщики", "Подрывник", "Скелеты", "Надгробие", "Валькирия", "Варвары", "Пушка", "Башня-бомбёжка", "Адская башня", "Колдун", "Всадник на кабане", "Мортира", "Ракета", "Разряд", "Дракончик", "Гоблинская бочка", "П.Е.К.К.А.", "Армия скелетов", "Ведьма", "Шар", "Принц", "Заморозка", "Гигантский скелет", "Молния", "Хижина варваров", "Голем", "Орда миньонов", "Тесла", "Арбалет", "Ярость", "Сборщик эликсира", "Зеркало", "Тёмный принц", "Королевский гигант", "Три мушкетёра", "Яд", "Принцесса", "Ледяной колдун", "Огненный дух", "Стражи", "Печь", "Шахтёр", "Спарки", "Адская гончая", "Ледяной дух", "Бревно", "Вышибала", "Дровосек", "Мегаминьон", "Пламенный дракон", "Ледяной голем", "Кладбище", "Торнадо", "Элитные варвары", "Клон", "Громовержец", "Гоблин с дротиками", "Палач", "Боевой таран", "Банда гоблинов", "Бандитка", "Ночная ведьма", "Летучие мыши", "Повозка с пушкой", "Мегарыцарь", "Летучка", "Бочка со скелетами", "Охотник", "Мини-генераторы", "Королевский призрак", "Магический лучник", "Варварская бочка", "Разбойники", "Королевские кабаны", "Гигантский снежок", "Королевские рекруты", "Гоблин-гигант", "Электродракон", "Всадница на баране", "Стенобои", "Землетрясение", "Гоблин в клетке", "Рыбак", "Эликсирный голем", "Целительница-воин", "Огненная лучница", "Дух исцеления", "Королевская почта", "Костяные драконы", "Электрический дух", "Электрогигант", "Ведьмина бабушка", "Гоблинский бур", "Золотой рыцарь", "Король скелетов", "Королева лучниц", "Шустрый шахтёр", "Феникс", "Монах", "Маленький принц", "Бездна", "Гоблин-подрывник", "Проклятие гоблинов", "Гоблинская машина", "Подозрительный куст", "Гоблинштейн", "Руническая гигантша", "Берсеркша", "Главная бандитка", "Императрица духов", "Лоза", "Ронин", "Миньон-гигант"];
 const CARDS_SORTED=[...CARDS].sort((a,b)=>a.localeCompare(b,"ru"));
@@ -434,12 +460,12 @@ const ensure=d=>{const def=defaultSwiss();if(!Array.isArray(d.swiss))d.swiss=def
 let data;try{data=ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{data=ensure(defaults())}
 let isAdmin=false,activeTab='table',dirty=false;
 const $=s=>document.querySelector(s);
-const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
+const save=async()=>{localStorage.setItem(KEY,JSON.stringify(data));await cloudWrite(data);lastSavedData=JSON.parse(JSON.stringify(data));};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const player=id=>data.players.find(p=>p.id===Number(id));
 const totalWins=id=>data.swiss.flat().flatMap(g=>g.pairs||[]).filter(m=>{const w=pairWinner(m);return w&&m[w]==id}).length;
 function title(eyebrow,heading,right=''){return `<div class="heading"><div>${eyebrow?`<div class="eyebrow">${eyebrow}</div>`:''}<h1>${heading}</h1></div><div class="count">${right}</div></div>`}
-const load=()=>{try{return ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{return ensure(defaults())}};
+const load=()=>lastSavedData?ensure(JSON.parse(JSON.stringify(lastSavedData))):(()=>{try{return ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{return ensure(defaults())}})();
 const nickOf=p=>p.nick||`Никнейм ${p.id}`;
 const initial=n=>{const t=String(n||'').trim();return t?t[0].toUpperCase():'?'};
 const mark=()=>{dirty=true;const m=$('#adminMsg');if(m)m.classList.remove('ok');updateBar()};
@@ -472,11 +498,11 @@ function updateBar(){
  const el=$('#adminMsg'),bar=$('#adminBar');if(!el)return;
  bar.classList.toggle('dirty',dirty);
  if(el.classList.contains('ok'))return;
- el.textContent=dirty?'● ЕСТЬ НЕСОХРАНЁННЫЕ ИЗМЕНЕНИЯ':'✎ РЕЖИМ РАЗРАБОТЧИКА';
+ el.textContent=dirty?'● ЕСТЬ НЕСОХРАНЁННЫЕ ИЗМЕНЕНИЯ':(isAdmin?'✎ РЕЖИМ РАЗРАБОТЧИКА · '+cloudStatus:'✎ РЕЖИМ РАЗРАБОТЧИКА');
 }
 let flashT;
 function flash(m){const el=$('#adminMsg');el.textContent=m;el.classList.add('ok');clearTimeout(flashT);flashT=setTimeout(()=>{el.classList.remove('ok');updateBar()},2000)}
-function saveAll(){save();dirty=false;const y=window.scrollY;render();window.scrollTo(0,y);flash('✓ СОХРАНЕНО')}
+async function saveAll(){try{await save();dirty=false;const y=window.scrollY;render();window.scrollTo(0,y);flash('✓ СОХРАНЕНО В ОБЛАКО')}catch(err){console.error(err);alert('Не удалось сохранить данные в Supabase. Проверь подключение и SQL-настройку. Локальная копия осталась в этом браузере.')}}
 function exitAdmin(){
  if(dirty){if(!confirm('Есть несохранённые изменения. Выйти без сохранения?'))return;data=load()}
  isAdmin=false;dirty=false;render();
@@ -611,7 +637,7 @@ app.addEventListener('input',onEdit);
 app.addEventListener('change',async e=>{
  const el=e.target;if(!isAdmin)return;
  if(el.dataset&&el.dataset.photo){const f=el.files[0];if(!f)return;try{const url=await readPhoto(f);player(el.dataset.photo).photo=url;mark();rerender()}catch{alert('Не удалось загрузить фото')}return}
- if(el.id==='importfile'){try{const f=el.files[0];if(!f)return;const obj=JSON.parse(await f.text());if(!obj.players)throw Error();data=ensure(obj);save();dirty=false;render();alert('Данные импортированы')}catch{alert('Не удалось прочитать резервную копию')}return}
+ if(el.id==='importfile'){try{const f=el.files[0];if(!f)return;const obj=JSON.parse(await f.text());if(!obj.players)throw Error();data=ensure(obj);await save();dirty=false;render();alert('Данные импортированы и сохранены в облако')}catch(err){console.error(err);alert('Не удалось импортировать или сохранить резервную копию')}return}
  onEdit(e);
 });
 app.addEventListener('click',e=>{
@@ -637,6 +663,7 @@ $('#loginBtn').onclick=()=>{
  $('#cancel').onclick=closeModal;
  $('#unlock').onclick=()=>{if($('#pin').value===localStorage.getItem('clashDevPin')||(!localStorage.getItem('clashDevPin')&&$('#pin').value==='2468')){isAdmin=true;dirty=false;closeModal();render()}else alert('Неверный код')}
 };
+initCloud();
 render();
 </script>
 </body>
