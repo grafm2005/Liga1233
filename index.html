@@ -364,6 +364,25 @@ body.admin main{padding-bottom:200px}
 .panel.red .grouptag{color:#ffb3bf}
 
 .grp .rec.txt{font-size:19px;letter-spacing:.6px}
+
+/* wins / crowns / bans */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.two .edlabel{margin-bottom:4px}
+.mside .edlabel{font-size:10px;margin:2px 0 0}
+.ed.wins{text-align:center;text-align-last:center;padding:9px 4px}
+.ed.cardsel{font-size:12px;padding:8px 6px;text-overflow:ellipsis}
+.crownsline{text-align:center;margin-top:8px;font-size:12px;font-weight:800;color:#d3e8fb}
+.banrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.banside{min-width:0}
+.banlbl{font-size:9px;font-weight:900;letter-spacing:1.5px;color:#ff9aab;margin-bottom:4px}
+.banside.r{text-align:right}
+.banside .chips{display:flex;flex-wrap:wrap;gap:4px}
+.banside.r .chips{justify-content:flex-end}
+.chip{font-size:11px;font-weight:800;line-height:1.15;padding:3px 8px;border-radius:999px;background:#ff547030;border:1px solid #ff8da28c;color:#ffd5dc}
+.evo-ph svg{width:54px;height:54px;display:block}
+.subtabs button{padding-left:12px;padding-right:12px}
+.subtabs{gap:6px}
+.subtabs button{padding-left:9px;padding-right:9px;font-size:11px;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -380,6 +399,11 @@ body.admin main{padding-bottom:200px}
 <script>
 const KEY='clashLeagueDataV1';
 const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,crowns:0,buildingDefense:0,favoriteCard:'—',cardUses:0,photo:'',nick:''})),activeRound:0,statsView:'all'});
+const CARDS=["Лучницы", "Стрелы", "Огненный шар", "Гигант", "Рыцарь", "Мини-П.Е.К.К.А.", "Миньоны", "Мушкетёр", "Хижина гоблинов", "Гоблины", "Гоблины-копейщики", "Подрывник", "Скелеты", "Надгробие", "Валькирия", "Варвары", "Пушка", "Башня-бомбёжка", "Адская башня", "Колдун", "Всадник на кабане", "Мортира", "Ракета", "Разряд", "Дракончик", "Гоблинская бочка", "П.Е.К.К.А.", "Армия скелетов", "Ведьма", "Шар", "Принц", "Заморозка", "Гигантский скелет", "Молния", "Хижина варваров", "Голем", "Орда миньонов", "Тесла", "Арбалет", "Ярость", "Сборщик эликсира", "Зеркало", "Тёмный принц", "Королевский гигант", "Три мушкетёра", "Яд", "Принцесса", "Ледяной колдун", "Огненный дух", "Стражи", "Печь", "Шахтёр", "Спарки", "Адская гончая", "Ледяной дух", "Бревно", "Вышибала", "Дровосек", "Мегаминьон", "Пламенный дракон", "Ледяной голем", "Кладбище", "Торнадо", "Элитные варвары", "Клон", "Громовержец", "Гоблин с дротиками", "Палач", "Боевой таран", "Банда гоблинов", "Бандитка", "Ночная ведьма", "Летучие мыши", "Повозка с пушкой", "Мегарыцарь", "Летучка", "Бочка со скелетами", "Охотник", "Мини-генераторы", "Королевский призрак", "Магический лучник", "Варварская бочка", "Разбойники", "Королевские кабаны", "Гигантский снежок", "Королевские рекруты", "Гоблин-гигант", "Электродракон", "Всадница на баране", "Стенобои", "Землетрясение", "Гоблин в клетке", "Рыбак", "Эликсирный голем", "Целительница-воин", "Огненная лучница", "Дух исцеления", "Королевская почта", "Костяные драконы", "Электрический дух", "Электрогигант", "Ведьмина бабушка", "Гоблинский бур", "Золотой рыцарь", "Король скелетов", "Королева лучниц", "Шустрый шахтёр", "Феникс", "Монах", "Маленький принц", "Бездна", "Гоблин-подрывник", "Проклятие гоблинов", "Гоблинская машина", "Подозрительный куст", "Гоблинштейн", "Руническая гигантша", "Берсеркша", "Главная бандитка", "Императрица духов", "Лоза", "Ронин", "Миньон-гигант"];
+const CARDS_SORTED=[...CARDS].sort((a,b)=>a.localeCompare(b,"ru"));
+const blankPair=()=>({a:0,b:0,wa:'',wb:'',sa:'',sb:'',ba:['','',''],bb:['','','']});
+const fixPair=m=>{['wa','wb','sa','sb'].forEach(k=>{if(m[k]==null)m[k]=''});['ba','bb'].forEach(k=>{if(!Array.isArray(m[k]))m[k]=['','',''];while(m[k].length<3)m[k].push('')})};
+const pairWinner=m=>{const ok=v=>v!==''&&v!=null;if(!ok(m.wa)||!ok(m.wb))return'';const x=+m.wa,y=+m.wb;return x===2&&y<2?'a':y===2&&x<2?'b':''};
 const SWISS_STRUCT=[
  [{rec:'0:0',pairs:8}],
  [{rec:'1:0',pairs:4},{rec:'0:1',pairs:4}],
@@ -393,15 +417,15 @@ const SWISS_STRUCT=[
  [{rec:'ФИНАЛ',pairs:1}]
 ];
 const ROUND_LABELS=['1 РАУНД','2 РАУНД','3 РАУНД','4 РАУНД','5 РАУНД','6 РАУНД','ЧЕТВЕРТЬФИНАЛ','ПОЛУФИНАЛ','МАТЧ ЗА 3-Е МЕСТО','ФИНАЛ'];
-const defaultSwiss=()=>SWISS_STRUCT.map(r=>r.map(g=>g.pairs?{rec:g.rec,pairs:Array.from({length:g.pairs},()=>({a:0,b:0,sa:'',sb:''}))}:{rec:g.rec,kind:g.kind,list:Array(g.list).fill(0)}));
-const ensure=d=>{const def=defaultSwiss();if(!Array.isArray(d.swiss))d.swiss=def;else for(let i=d.swiss.length;i<def.length;i++)d.swiss.push(def[i]);return d};
+const defaultSwiss=()=>SWISS_STRUCT.map(r=>r.map(g=>g.pairs?{rec:g.rec,pairs:Array.from({length:g.pairs},blankPair)}:{rec:g.rec,kind:g.kind,list:Array(g.list).fill(0)}));
+const ensure=d=>{const def=defaultSwiss();if(!Array.isArray(d.swiss))d.swiss=def;else for(let i=d.swiss.length;i<def.length;i++)d.swiss.push(def[i]);d.swiss.flat().forEach(g=>g.pairs&&g.pairs.forEach(fixPair));return d};
 let data;try{data=ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{data=ensure(defaults())}
 let isAdmin=false,activeTab='table',dirty=false;
 const $=s=>document.querySelector(s);
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const player=id=>data.players.find(p=>p.id===Number(id));
-const totalWins=id=>data.swiss.flat().flatMap(g=>g.pairs||[]).filter(m=>m.sa!==''&&m.sb!==''&&m.sa!=null&&m.sb!=null&&((m.a==id&&Number(m.sa)>Number(m.sb))||(m.b==id&&Number(m.sb)>Number(m.sa)))).length;
+const totalWins=id=>data.swiss.flat().flatMap(g=>g.pairs||[]).filter(m=>{const w=pairWinner(m);return w&&m[w]==id}).length;
 function title(eyebrow,heading,right=''){return `<div class="heading"><div>${eyebrow?`<div class="eyebrow">${eyebrow}</div>`:''}<h1>${heading}</h1></div><div class="count">${right}</div></div>`}
 const load=()=>{try{return ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{return ensure(defaults())}};
 const nickOf=p=>p.nick||`Никнейм ${p.id}`;
@@ -411,13 +435,15 @@ const rerender=()=>{const y=window.scrollY;render();window.scrollTo(0,y)};
 
 /* ---------- editing helpers ---------- */
 const editBanner=()=>isAdmin?`<div class="editbanner"><span class="pen">✎</span><span>Режим разработчика: нажимай на поля с золотой пунктирной рамкой, меняй данные и жми «СОХРАНИТЬ» внизу.</span></div>`:'';
-const edText=(ed,val,cls='',ph='')=>`<span class="ed-wrap"><input class="ed ${cls}" data-ed="${ed}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></span>`;
+const edText=(ed,val,cls='',ph='',attrs='')=>`<span class="ed-wrap"><input class="ed ${cls}" ${attrs} data-ed="${ed}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></span>`;
 const edNum=(ed,val,cls='')=>`<span class="ed-wrap ${cls==='sm'?'inl':''} ${cls==='score'?'scorew':''}"><input class="ed ${cls}" type="number" inputmode="numeric" min="0" data-ed="${ed}" value="${esc(val)}" ${cls==='score'?'placeholder="короны"':''}></span>`;
+const winSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed wins" data-ed="${ed}">${['','0','1','2'].map(v=>`<option value="${v}" ${String(sel)===v?'selected':''}>${v===''?'—':v}</option>`).join('')}</select></span>`;
+const cardSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed cardsel" data-ed="${ed}"><option value="">— бан —</option>${CARDS_SORTED.map(c=>`<option value="${esc(c)}" ${c===sel?'selected':''}>${esc(c)}</option>`).join('')}</select></span>`;
 const playerSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed" data-ed="${ed}"><option value="0">— выбрать —</option>${data.players.map(p=>`<option value="${p.id}" ${p.id==sel?'selected':''}>${esc(nickOf(p))}</option>`).join('')}</select></span>`;
 function applyEd(el){
  const [t,a,b,c,d]=el.dataset.ed.split(':'),v=el.value;
  if(t==='p'){const p=player(a);if(!p)return;p[b]=['name','nick','favoriteCard'].includes(b)?v:Math.max(0,+v||0)}
- else if(t==='s'){const m=data.swiss[+a]?.[+b]?.pairs?.[+c];if(!m)return;m[d]=['a','b'].includes(d)?+v:v}
+ else if(t==='s'){const m=data.swiss[+a]?.[+b]?.pairs?.[+c];if(!m)return;if(d==='a'||d==='b')m[d]=+v;else if(/^b[ab]\d$/.test(d))m[d.slice(0,2)][+d[2]]=v;else m[d]=v}
  else if(t==='l'){const g=data.swiss[+a]?.[+b];if(g&&g.list)g.list[+c]=+v}
 }
 function readPhoto(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{const S=360,k=Math.min(1,S/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};img.src=fr.result};fr.readAsDataURL(file)})}
@@ -454,10 +480,16 @@ function renderGroup(r,gi,g){
   body=g.list.map((id,i)=>isAdmin?`<div class="listrow edit">${playerSelect(`l:${r}:${gi}:${i}`,id)}</div>`:`<div class="listrow">${pn(id)}</div>`).join('');
  }else{
   body=g.pairs.map((m,i)=>{
-   if(isAdmin)return `<div class="match matchedit"><div class="mrow"><div class="mside">${playerSelect(`s:${r}:${gi}:${i}:a`,m.a)}${edNum(`s:${r}:${gi}:${i}:sa`,m.sa??'','score')}</div><div class="vs">VS</div><div class="mside">${playerSelect(`s:${r}:${gi}:${i}:b`,m.b)}${edNum(`s:${r}:${gi}:${i}:sb`,m.sb??'','score')}</div></div></div>`;
-   const done=m.sa!==''&&m.sb!==''&&m.sa!=null&&m.sb!=null;
-   const wa=done&&+m.sa>+m.sb,wb=done&&+m.sb>+m.sa;
-   return `<div class="match pair"><div class="versus"><div class="team ${wa?'win':''}">${pn(m.a)}</div><div class="score ${done?'':'pending'}">${done?`${esc(m.sa)}:${esc(m.sb)}`:'VS'}</div><div class="team ${wb?'win':''}">${pn(m.b)}</div></div></div>`;
+   if(isAdmin){
+    const k=f=>`s:${r}:${gi}:${i}:${f}`;
+    const side=x=>`<div class="mside">${playerSelect(k(x),m[x])}<div class="two"><div><div class="edlabel">ПОБЕДЫ</div>${winSelect(k('w'+x),m['w'+x])}</div><div><div class="edlabel">КОРОНЫ</div>${edNum(k('s'+x),m['s'+x]??'','score')}</div></div><div class="edlabel">БАНЫ</div>${[0,1,2].map(j=>cardSelect(k('b'+x+j),(m['b'+x]||[])[j]||'')).join('')}</div>`;
+    return `<div class="match matchedit"><div class="mrow">${side('a')}<div class="vs">VS</div>${side('b')}</div></div>`;
+   }
+   const hasW=m.wa!==''&&m.wb!==''&&m.wa!=null&&m.wb!=null,w=pairWinner(m);
+   const hasC=m.sa!==''&&m.sb!==''&&m.sa!=null&&m.sb!=null;
+   const ba=(m.ba||[]).filter(Boolean),bb=(m.bb||[]).filter(Boolean);
+   const chips=a=>a.map(n=>`<span class="chip">${esc(n)}</span>`).join('');
+   return `<div class="match pair"><div class="versus"><div class="team ${w==='a'?'win':''}">${pn(m.a)}</div><div class="score ${w?'':'pending'}">${hasW?`${esc(m.wa)}:${esc(m.wb)}`:'VS'}</div><div class="team ${w==='b'?'win':''}">${pn(m.b)}</div></div>${hasC?`<div class="crownsline">корон ${esc(m.sa)} : ${esc(m.sb)}</div>`:''}${ba.length||bb.length?`<div class="banrow"><div class="banside"><div class="banlbl">БАНЫ</div><div class="chips">${chips(ba)}</div></div><div class="banside r"><div class="banlbl">БАНЫ</div><div class="chips">${chips(bb)}</div></div></div>`:''}</div>`;
   }).join('');
  }
  return `<section class="panel grp ${kind}"><div class="panelhead"><span class="rec ${/^\d:\d$/.test(g.rec)?'':'txt'}">${g.rec}</span><span class="grouptag">${tag}</span></div>${body}</section>`;
@@ -467,7 +499,7 @@ function renderTable(){
  const last=data.swiss.length-1;
  let idx=Math.max(0,Math.min(last,+data.activeRound||0));data.activeRound=idx;
  const nav=`<div class="roundnav"><button class="rn-arrow" data-rnav="-1" aria-label="Предыдущий этап" ${idx===0?'disabled':''}>${chev(-1)}</button><div class="rn-label ${ROUND_LABELS[idx].length>11?'long':''}">${ROUND_LABELS[idx]}</div><button class="rn-arrow" data-rnav="1" aria-label="Следующий этап" ${idx===last?'disabled':''}>${chev(1)}</button></div>`;
- return title(idx<6?'ШВЕЙЦАРСКАЯ СИСТЕМА':'ПЛЕЙ-ОФФ','ТАБЛИЦА',`Этап ${idx+1} из ${last+1}`)+editBanner()+nav+data.swiss[idx].map((g,gi)=>renderGroup(idx,gi,g)).join('');
+ return title(idx<6?'ШВЕЙЦАРСКАЯ СИСТЕМА':'ПЛЕЙ-ОФФ','ТАБЛИЦА',`Этап ${idx+1} из ${last+1}`)+editBanner()+(isAdmin?'<p class="hint" style="margin:-6px 0 14px">Играем до 2 побед: счёт серии 2:0, 2:1, 1:2 или 0:2. Победы важнее корон. У каждого игрока выбери по 3 карты для бана.</p>':'')+nav+data.swiss[idx].map((g,gi)=>renderGroup(idx,gi,g)).join('');
 }
 function renderPlayers(){
  return title('','УЧАСТНИКИ','16 игроков')+editBanner()+`<div class="cards">${data.players.map(p=>isAdmin?
@@ -480,7 +512,18 @@ const STAT_DEFS={
  defense:{tab:'ЗАЩИТА ЗДАНИЙ',title:'ЛУЧШАЯ ЗАЩИТА ЗДАНИЙ',field:'buildingDefense',val:p=>p.buildingDefense||0,cap:()=>'защищённых зданий',row:()=>'Защита зданий'},
  card:{tab:'КАРТЫ',title:'САМАЯ ПОПУЛЯРНАЯ КАРТА',field:'cardUses',val:p=>p.cardUses||0,cap:p=>`${esc(p.favoriteCard||'—')} • использований`,row:p=>esc(p.favoriteCard||'—')}
 };
-function evoFrame(p){return `<div class="evo"><div class="evo-edge"></div><div class="evo-in">${p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="evo-ph">${esc(initial(p.nick||p.name))}</span>`}</div><div class="evo-glow"></div></div>`}
+const evoBox=inner=>`<div class="evo"><div class="evo-edge"></div><div class="evo-in">${inner}</div><div class="evo-glow"></div></div>`;
+function evoFrame(p){return evoBox(p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="evo-ph">${esc(initial(p.nick||p.name))}</span>`)}
+const BAN_ICON='<svg viewBox="0 0 48 48" fill="none" stroke="#f1dcff" stroke-width="5" stroke-linecap="round"><circle cx="24" cy="24" r="16"/><line x1="13" y1="35" x2="35" y2="13"/></svg>';
+function banCounts(){const c={};data.swiss.flat().forEach(g=>(g.pairs||[]).forEach(m=>[...(m.ba||[]),...(m.bb||[])].forEach(n=>{if(n)c[n]=(c[n]||0)+1})));return Object.entries(c).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],'ru'))}
+function banSection(full){
+ const list=banCounts(),best=list[0]||['—',0],rows=list.slice(1,full?list.length:5);
+ return `<section class="panel statsec"><div class="panelhead"><span>БАНЫ КАРТ</span>${full?'':`<button class="allbtn" data-stat="bans">Все ›</button>`}</div>`+
+ `<div class="leader"><div class="leader-top">САМАЯ БАНИМАЯ КАРТА</div><div class="leader-body"><div class="leader-who">${evoBox(`<span class="evo-ph">${BAN_ICON}</span>`)}<div class="leader-name">${esc(best[0])}</div></div><div class="leader-val"><div class="statbig leader-num">${best[1]}</div><div class="small">банов</div></div></div></div>`+
+ rows.map((r,i)=>`<div class="statline"><div class="rank">${i+2}</div><div><div class="pname">${esc(r[0])}</div><div class="small">Баны</div></div><div class="value">${r[1]}</div></div>`).join('')+
+ (list.length?'':'<div class="empty">Баны пока не выбраны. Они появятся, когда вы отметите их в таблице.</div>')+
+ `</section>`;
+}
 function statSection(key,full){
  const d=STAT_DEFS[key];
  const sorted=[...data.players].sort((a,b)=>d.val(b)-d.val(a));
@@ -494,14 +537,14 @@ function statSection(key,full){
 function adminStatSection(key){
  const d=STAT_DEFS[key];
  return `<section class="panel statsec"><div class="panelhead"><span>${d.tab}</span><span style="color:#ffe36a">✎ ИЗМЕНИТЬ</span></div>`+
- data.players.map(p=>`<div class="statline edrow"><div><div class="pname">${esc(nickOf(p))}</div><div class="small">${esc(p.name)}</div></div>${key==='card'?`<div class="edgroup">${edText(`p:${p.id}:favoriteCard`,p.favoriteCard||'','','Карта')}${edNum(`p:${p.id}:cardUses`,p.cardUses||0)}</div>`:`<div class="edgroup narrow">${edNum(`p:${p.id}:${d.field}`,d.val(p))}</div>`}</div>`).join('')+
+ data.players.map(p=>`<div class="statline edrow"><div><div class="pname">${esc(nickOf(p))}</div><div class="small">${esc(p.name)}</div></div>${key==='card'?`<div class="edgroup">${edText(`p:${p.id}:favoriteCard`,p.favoriteCard||'','','Карта','list="cardlist"')}${edNum(`p:${p.id}:cardUses`,p.cardUses||0)}</div>`:`<div class="edgroup narrow">${edNum(`p:${p.id}:${d.field}`,d.val(p))}</div>`}</div>`).join('')+
  `</section>`;
 }
 function renderStats(){
  const view=data.statsView||'all';
- const keys=view==='all'?['crowns','defense','card']:[view];
- const tabs=[['all','ВСЕ'],['crowns','КОРОНЫ'],['defense','ЗАЩИТА'],['card','КАРТЫ']];
- return title('РЕЙТИНГ ИГРОКОВ','СТАТИСТИКА','Авторасчёт')+editBanner()+`<div class="subtabs">${tabs.map(([k,v])=>`<button data-stat="${k}" class="${k===view?'active':''}">${v}</button>`).join('')}</div>`+keys.map(k=>isAdmin?adminStatSection(k):statSection(k,view!=='all')).join('');
+ const keys=view==='all'?['crowns','defense','card','bans']:[view];
+ const tabs=[['all','ВСЕ'],['crowns','КОРОНЫ'],['defense','ЗАЩИТА'],['card','КАРТЫ'],['bans','БАНЫ']];
+ return title('РЕЙТИНГ ИГРОКОВ','СТАТИСТИКА','Авторасчёт')+editBanner()+`<div class="subtabs">${tabs.map(([k,v])=>`<button data-stat="${k}" class="${k===view?'active':''}">${v}</button>`).join('')}</div>`+keys.map(k=>k==='bans'?banSection(view!=='all'):isAdmin?adminStatSection(k):statSection(k,view!=='all')).join('')+(isAdmin&&keys.includes('card')?`<datalist id="cardlist">${CARDS_SORTED.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`:'');
 }
 function adminSettings(){
  return `<section class="panel" style="margin-top:18px"><div class="panelhead"><span>НАСТРОЙКИ РАЗРАБОТЧИКА</span></div><div class="settingsbody"><div class="edlabel">НОВЫЙ КОД РАЗРАБОТЧИКА</div><span class="ed-wrap"><input class="ed" id="newpin" type="password" placeholder="Минимум 4 символа" autocomplete="new-password"></span><div class="actions"><button class="secondary" id="savepin">ИЗМЕНИТЬ КОД</button><button class="secondary" id="export">ЭКСПОРТ JSON</button><label class="secondary" for="importfile">ИМПОРТ JSON</label><input class="hidden" id="importfile" type="file" accept="application/json"></div><p class="hint">Данные хранятся в браузере. Для синхронизации между устройствами понадобится серверная база данных. Код доступа в статическом сайте не является полноценной защитой.</p></div></section>`;
