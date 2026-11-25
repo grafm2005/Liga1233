@@ -383,6 +383,18 @@ body.admin main{padding-bottom:200px}
 .subtabs button{padding-left:12px;padding-right:12px}
 .subtabs{gap:6px}
 .subtabs button{padding-left:9px;padding-right:9px;font-size:11px;letter-spacing:0}
+.editbanner.info{border-style:solid;border-color:#7fc8ff99;background:#0d3a7a66;color:#d7ebff}
+.editbanner.info .pen{color:#9fd6ff}
+
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.three .ed.score{padding:9px 2px}
+.three .ed.score::placeholder{font-size:11px}
+.gamesline{text-align:center;margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#9cc3e8;opacity:.9}
+.ratingtable{min-width:0}
+.ratingtable th:first-child,.ratingtable td:first-child{text-align:left;width:46px}
+.rulebox{margin-top:18px;padding:14px 16px;font-size:13px;line-height:1.5;color:#d7ebff}
+.rulebox ul{margin:6px 0 0;padding-left:18px}
+.rulebox li{margin:3px 0}
 </style>
 </head>
 <body>
@@ -398,11 +410,11 @@ body.admin main{padding-bottom:200px}
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
 const KEY='clashLeagueDataV1';
-const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,crowns:0,buildingDefense:0,favoriteCard:'—',cardUses:0,photo:'',nick:''})),activeRound:0,statsView:'all'});
+const defaults=()=>({season:'Сезон 2026',players:Array.from({length:16},(_,i)=>({id:i+1,name:`Игрок ${i+1}`,season:0,total:0,photo:'',nick:''})),activeRound:0,statsView:'all'});
 const CARDS=["Лучницы", "Стрелы", "Огненный шар", "Гигант", "Рыцарь", "Мини-П.Е.К.К.А.", "Миньоны", "Мушкетёр", "Хижина гоблинов", "Гоблины", "Гоблины-копейщики", "Подрывник", "Скелеты", "Надгробие", "Валькирия", "Варвары", "Пушка", "Башня-бомбёжка", "Адская башня", "Колдун", "Всадник на кабане", "Мортира", "Ракета", "Разряд", "Дракончик", "Гоблинская бочка", "П.Е.К.К.А.", "Армия скелетов", "Ведьма", "Шар", "Принц", "Заморозка", "Гигантский скелет", "Молния", "Хижина варваров", "Голем", "Орда миньонов", "Тесла", "Арбалет", "Ярость", "Сборщик эликсира", "Зеркало", "Тёмный принц", "Королевский гигант", "Три мушкетёра", "Яд", "Принцесса", "Ледяной колдун", "Огненный дух", "Стражи", "Печь", "Шахтёр", "Спарки", "Адская гончая", "Ледяной дух", "Бревно", "Вышибала", "Дровосек", "Мегаминьон", "Пламенный дракон", "Ледяной голем", "Кладбище", "Торнадо", "Элитные варвары", "Клон", "Громовержец", "Гоблин с дротиками", "Палач", "Боевой таран", "Банда гоблинов", "Бандитка", "Ночная ведьма", "Летучие мыши", "Повозка с пушкой", "Мегарыцарь", "Летучка", "Бочка со скелетами", "Охотник", "Мини-генераторы", "Королевский призрак", "Магический лучник", "Варварская бочка", "Разбойники", "Королевские кабаны", "Гигантский снежок", "Королевские рекруты", "Гоблин-гигант", "Электродракон", "Всадница на баране", "Стенобои", "Землетрясение", "Гоблин в клетке", "Рыбак", "Эликсирный голем", "Целительница-воин", "Огненная лучница", "Дух исцеления", "Королевская почта", "Костяные драконы", "Электрический дух", "Электрогигант", "Ведьмина бабушка", "Гоблинский бур", "Золотой рыцарь", "Король скелетов", "Королева лучниц", "Шустрый шахтёр", "Феникс", "Монах", "Маленький принц", "Бездна", "Гоблин-подрывник", "Проклятие гоблинов", "Гоблинская машина", "Подозрительный куст", "Гоблинштейн", "Руническая гигантша", "Берсеркша", "Главная бандитка", "Императрица духов", "Лоза", "Ронин", "Миньон-гигант"];
 const CARDS_SORTED=[...CARDS].sort((a,b)=>a.localeCompare(b,"ru"));
-const blankPair=()=>({a:0,b:0,wa:'',wb:'',sa:'',sb:'',ba:['','',''],bb:['','','']});
-const fixPair=m=>{['wa','wb','sa','sb'].forEach(k=>{if(m[k]==null)m[k]=''});['ba','bb'].forEach(k=>{if(!Array.isArray(m[k]))m[k]=['','',''];while(m[k].length<3)m[k].push('')})};
+const blankPair=()=>({a:0,b:0,wa:'',wb:'',ga:['','',''],gb:['','',''],ba:['','',''],bb:['','','']});
+const fixPair=m=>{['wa','wb','sa','sb'].forEach(k=>{if(m[k]==null)m[k]=''});['ba','bb','ga','gb'].forEach(k=>{if(!Array.isArray(m[k]))m[k]=['','',''];while(m[k].length<3)m[k].push('')})};
 const pairWinner=m=>{const ok=v=>v!==''&&v!=null;if(!ok(m.wa)||!ok(m.wb))return'';const x=+m.wa,y=+m.wb;return x===2&&y<2?'a':y===2&&x<2?'b':''};
 const SWISS_STRUCT=[
  [{rec:'0:0',pairs:8}],
@@ -418,7 +430,7 @@ const SWISS_STRUCT=[
 ];
 const ROUND_LABELS=['1 РАУНД','2 РАУНД','3 РАУНД','4 РАУНД','5 РАУНД','6 РАУНД','ЧЕТВЕРТЬФИНАЛ','ПОЛУФИНАЛ','МАТЧ ЗА 3-Е МЕСТО','ФИНАЛ'];
 const defaultSwiss=()=>SWISS_STRUCT.map(r=>r.map(g=>g.pairs?{rec:g.rec,pairs:Array.from({length:g.pairs},blankPair)}:{rec:g.rec,kind:g.kind,list:Array(g.list).fill(0)}));
-const ensure=d=>{const def=defaultSwiss();if(!Array.isArray(d.swiss))d.swiss=def;else for(let i=d.swiss.length;i<def.length;i++)d.swiss.push(def[i]);d.swiss.flat().forEach(g=>g.pairs&&g.pairs.forEach(fixPair));return d};
+const ensure=d=>{const def=defaultSwiss();if(!Array.isArray(d.swiss))d.swiss=def;else for(let i=d.swiss.length;i<def.length;i++)d.swiss.push(def[i]);d.swiss.flat().forEach(g=>g.pairs&&g.pairs.forEach(fixPair));(d.players||[]).forEach(p=>{delete p.crowns;delete p.buildingDefense;delete p.favoriteCard;delete p.cardUses});return d};
 let data;try{data=ensure(JSON.parse(localStorage.getItem(KEY))||defaults())}catch{data=ensure(defaults())}
 let isAdmin=false,activeTab='table',dirty=false;
 const $=s=>document.querySelector(s);
@@ -442,8 +454,8 @@ const cardSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed cardsel"
 const playerSelect=(ed,sel)=>`<span class="ed-wrap sel"><select class="ed" data-ed="${ed}"><option value="0">— выбрать —</option>${data.players.map(p=>`<option value="${p.id}" ${p.id==sel?'selected':''}>${esc(nickOf(p))}</option>`).join('')}</select></span>`;
 function applyEd(el){
  const [t,a,b,c,d]=el.dataset.ed.split(':'),v=el.value;
- if(t==='p'){const p=player(a);if(!p)return;p[b]=['name','nick','favoriteCard'].includes(b)?v:Math.max(0,+v||0)}
- else if(t==='s'){const m=data.swiss[+a]?.[+b]?.pairs?.[+c];if(!m)return;if(d==='a'||d==='b')m[d]=+v;else if(/^b[ab]\d$/.test(d))m[d.slice(0,2)][+d[2]]=v;else m[d]=v}
+ if(t==='p'){const p=player(a);if(!p)return;p[b]=['name','nick'].includes(b)?v:Math.max(0,+v||0)}
+ else if(t==='s'){const m=data.swiss[+a]?.[+b]?.pairs?.[+c];if(!m)return;if(d==='a'||d==='b')m[d]=+v;else if(/^b[ab]\d$/.test(d))m[d.slice(0,2)][+d[2]]=v;else if(/^g[ab]\d$/.test(d)){let n=v;if(v!==''){n=String(Math.max(0,Math.min(3,Math.floor(+v||0))));if(n!==v)el.value=n}m[d.slice(0,2)][+d[2]]=n}else m[d]=v}
  else if(t==='l'){const g=data.swiss[+a]?.[+b];if(g&&g.list)g.list[+c]=+v}
 }
 function readPhoto(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{const S=360,k=Math.min(1,S/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};img.src=fr.result};fr.readAsDataURL(file)})}
@@ -451,6 +463,7 @@ function photoEdit(p){return `<div class="photoedit"><label class="phbtn" for="p
 
 /* ---------- render ---------- */
 function render(){
+ STATS=playerStats();
  $('#app').innerHTML=({table:renderTable,players:renderPlayers,stats:renderStats,rating:renderRating})[activeTab]();
  document.body.classList.toggle('admin',isAdmin);
  updateBar();
@@ -482,14 +495,15 @@ function renderGroup(r,gi,g){
   body=g.pairs.map((m,i)=>{
    if(isAdmin){
     const k=f=>`s:${r}:${gi}:${i}:${f}`;
-    const side=x=>`<div class="mside">${playerSelect(k(x),m[x])}<div class="two"><div><div class="edlabel">ПОБЕДЫ</div>${winSelect(k('w'+x),m['w'+x])}</div><div><div class="edlabel">КОРОНЫ</div>${edNum(k('s'+x),m['s'+x]??'','score')}</div></div><div class="edlabel">БАНЫ</div>${[0,1,2].map(j=>cardSelect(k('b'+x+j),(m['b'+x]||[])[j]||'')).join('')}</div>`;
+    const side=x=>`<div class="mside">${playerSelect(k(x),m[x])}<div class="edlabel">ПОБЕДЫ В СЕРИИ</div>${winSelect(k('w'+x),m['w'+x])}<div class="edlabel">КОРОНЫ ПО ИГРАМ</div><div class="three">${[0,1,2].map(j=>`<span class="ed-wrap scorew"><input class="ed score" type="number" inputmode="numeric" min="0" max="3" placeholder="И${j+1}" data-ed="${k('g'+x+j)}" value="${esc((m['g'+x]||[])[j]??'')}"></span>`).join('')}</div><div class="edlabel">БАНЫ</div>${[0,1,2].map(j=>cardSelect(k('b'+x+j),(m['b'+x]||[])[j]||'')).join('')}</div>`;
     return `<div class="match matchedit"><div class="mrow">${side('a')}<div class="vs">VS</div>${side('b')}</div></div>`;
    }
    const hasW=m.wa!==''&&m.wb!==''&&m.wa!=null&&m.wb!=null,w=pairWinner(m);
-   const hasC=m.sa!==''&&m.sb!==''&&m.sa!=null&&m.sb!=null;
+   const okv=v=>v!==''&&v!=null,gl=[0,1,2].filter(j=>okv((m.ga||[])[j])&&okv((m.gb||[])[j])).map(j=>`${esc(m.ga[j])}:${esc(m.gb[j])}`);
+   const legacy=!gl.length&&okv(m.sa)&&okv(m.sb);
    const ba=(m.ba||[]).filter(Boolean),bb=(m.bb||[]).filter(Boolean);
    const chips=a=>a.map(n=>`<span class="chip">${esc(n)}</span>`).join('');
-   return `<div class="match pair"><div class="versus"><div class="team ${w==='a'?'win':''}">${pn(m.a)}</div><div class="score ${w?'':'pending'}">${hasW?`${esc(m.wa)}:${esc(m.wb)}`:'VS'}</div><div class="team ${w==='b'?'win':''}">${pn(m.b)}</div></div>${hasC?`<div class="crownsline">корон ${esc(m.sa)} : ${esc(m.sb)}</div>`:''}${ba.length||bb.length?`<div class="banrow"><div class="banside"><div class="banlbl">БАНЫ</div><div class="chips">${chips(ba)}</div></div><div class="banside r"><div class="banlbl">БАНЫ</div><div class="chips">${chips(bb)}</div></div></div>`:''}</div>`;
+   return `<div class="match pair"><div class="versus"><div class="team ${w==='a'?'win':''}">${pn(m.a)}</div><div class="score ${w?'':'pending'}">${hasW?`${esc(m.wa)}:${esc(m.wb)}`:'VS'}</div><div class="team ${w==='b'?'win':''}">${pn(m.b)}</div></div>${gl.length?`<div class="gamesline">${gl.join(' · ')}</div>`:legacy?`<div class="gamesline">корон ${esc(m.sa)} : ${esc(m.sb)}</div>`:''}${ba.length||bb.length?`<div class="banrow"><div class="banside"><div class="banlbl">БАНЫ</div><div class="chips">${chips(ba)}</div></div><div class="banside r"><div class="banlbl">БАНЫ</div><div class="chips">${chips(bb)}</div></div></div>`:''}</div>`;
   }).join('');
  }
  return `<section class="panel grp ${kind}"><div class="panelhead"><span class="rec ${/^\d:\d$/.test(g.rec)?'':'txt'}">${g.rec}</span><span class="grouptag">${tag}</span></div>${body}</section>`;
@@ -499,18 +513,53 @@ function renderTable(){
  const last=data.swiss.length-1;
  let idx=Math.max(0,Math.min(last,+data.activeRound||0));data.activeRound=idx;
  const nav=`<div class="roundnav"><button class="rn-arrow" data-rnav="-1" aria-label="Предыдущий этап" ${idx===0?'disabled':''}>${chev(-1)}</button><div class="rn-label ${ROUND_LABELS[idx].length>11?'long':''}">${ROUND_LABELS[idx]}</div><button class="rn-arrow" data-rnav="1" aria-label="Следующий этап" ${idx===last?'disabled':''}>${chev(1)}</button></div>`;
- return title(idx<6?'ШВЕЙЦАРСКАЯ СИСТЕМА':'ПЛЕЙ-ОФФ','ТАБЛИЦА',`Этап ${idx+1} из ${last+1}`)+editBanner()+(isAdmin?'<p class="hint" style="margin:-6px 0 14px">Играем до 2 побед: счёт серии 2:0, 2:1, 1:2 или 0:2. Победы важнее корон. У каждого игрока выбери по 3 карты для бана.</p>':'')+nav+data.swiss[idx].map((g,gi)=>renderGroup(idx,gi,g)).join('');
+ return title(idx<6?'ШВЕЙЦАРСКАЯ СИСТЕМА':'ПЛЕЙ-ОФФ','ТАБЛИЦА',`Этап ${idx+1} из ${last+1}`)+editBanner()+(isAdmin?'<p class="hint" style="margin:-6px 0 14px">Играем до 2 побед: счёт серии 2:0, 2:1, 1:2 или 0:2. Сначала укажи победы в серии, затем короны каждого игрока в каждой игре (от 0 до 3) и по 3 карты для бана. Рейтинг и статистика обновятся сами.</p>':'')+nav+data.swiss[idx].map((g,gi)=>renderGroup(idx,gi,g)).join('');
 }
 function renderPlayers(){
  return title('','УЧАСТНИКИ','16 игроков')+editBanner()+`<div class="cards">${data.players.map(p=>isAdmin?
-  `<article class="playercard editing">${edText(`p:${p.id}:nick`,p.nick||'','gold','Никнейм')}${edText(`p:${p.id}:name`,p.name,'','Имя')}<p>${totalWins(p.id)} побед • ${p.crowns||0} корон</p>${photoEdit(p)}</article>`:
-  `<article class="playercard"><div class="nick">${esc(nickOf(p))}</div><h3>${esc(p.name)}</h3><p>${totalWins(p.id)} побед • ${p.crowns||0} корон</p></article>`).join('')}</div>`;
+  `<article class="playercard editing">${edText(`p:${p.id}:nick`,p.nick||'','gold','Никнейм')}${edText(`p:${p.id}:name`,p.name,'','Имя')}<p>${totalWins(p.id)} побед • ${crownsOf(p)} корон</p>${photoEdit(p)}</article>`:
+  `<article class="playercard"><div class="nick">${esc(nickOf(p))}</div><h3>${esc(p.name)}</h3><p>${totalWins(p.id)} побед • ${crownsOf(p)} корон</p></article>`).join('')}</div>`;
 }
 
+let STATS={};
+/* Итоги серии: игры, короны и защита. Основа - счёт каждой игры (ga/gb); старые данные с общей суммой корон (sa/sb) тоже учитываются */
+function pairTotals(m){
+ const num=v=>v===''||v==null?null:+v;
+ let games=0,ca=0,cb=0,da=0,db=0;
+ for(let i=0;i<3;i++){
+  const x=num((m.ga||[])[i]),y=num((m.gb||[])[i]);
+  if(x!=null&&y!=null){games++;ca+=x;cb+=y;da+=Math.max(0,3-y);db+=Math.max(0,3-x)}
+ }
+ if(games)return{games,ca,cb,da,db};
+ const sa=num(m.sa),sb=num(m.sb);
+ if(sa!=null&&sb!=null){const g=pairWinner(m)?+m.wa+ +m.wb:0;return{games:g,ca:sa,cb:sb,da:Math.max(0,3*g-sb),db:Math.max(0,3*g-sa)}}
+ return null;
+}
+/* Рейтинг хранится в сотых долях (0.10 = 10), чтобы не копились ошибки округления */
+function playerStats(){
+ const st={};data.players.forEach(p=>st[p.id]={crowns:0,defense:0,bld:0,pts:0});
+ const add=(id,v)=>{if(st[id])st[id].pts+=v};
+ data.swiss.flat().flatMap(g=>g.pairs||[]).forEach(m=>{
+  const t=pairTotals(m),A=st[m.a],B=st[m.b];
+  if(t){
+   if(A){A.crowns+=t.ca;A.defense+=t.da;A.bld+=3*t.games;A.pts+=(t.ca+t.da)*10}
+   if(B){B.crowns+=t.cb;B.defense+=t.db;B.bld+=3*t.games;B.pts+=(t.cb+t.db)*10}
+  }
+  const w=pairWinner(m);
+  if(w&&(+m.wa+ +m.wb)===2)add(m[w],60); /* серия 2:0 - как будто выиграна и третья игра 3:0 */
+ });
+ [...new Set(data.swiss[3]?.[0]?.list||[])].forEach(id=>add(id,360)); /* вышли со стадии 3:0: 2 раунда по 1.80 */
+ [...new Set(data.swiss[4]?.[0]?.list||[])].forEach(id=>add(id,180)); /* вышли со стадии 3:1: 1 раунд 1.80 */
+ const place=(m,fn)=>{const w=m&&pairWinner(m);if(w)fn(m[w],m[w==='a'?'b':'a'])};
+ place(data.swiss[9]?.[0]?.pairs?.[0],(win,lose)=>{add(win,500);add(lose,300)}); /* финал: 1 место +5, 2 место +3 */
+ place(data.swiss[8]?.[0]?.pairs?.[0],win=>add(win,100)); /* матч за 3 место: +1 */
+ return st;
+}
+const stOf=p=>STATS[p.id]||{crowns:0,defense:0,bld:0,pts:0};
+const crownsOf=p=>stOf(p).crowns;
 const STAT_DEFS={
- crowns:{tab:'КОРОНЫ',title:'ЛИДЕР ПО КОРОНАМ',field:'crowns',val:p=>p.crowns||0,cap:()=>'корон',row:()=>'Короны'},
- defense:{tab:'ЗАЩИТА ЗДАНИЙ',title:'ЛУЧШАЯ ЗАЩИТА ЗДАНИЙ',field:'buildingDefense',val:p=>p.buildingDefense||0,cap:()=>'защищённых зданий',row:()=>'Защита зданий'},
- card:{tab:'КАРТЫ',title:'САМАЯ ПОПУЛЯРНАЯ КАРТА',field:'cardUses',val:p=>p.cardUses||0,cap:p=>`${esc(p.favoriteCard||'—')} • использований`,row:p=>esc(p.favoriteCard||'—')}
+ crowns:{tab:'КОРОНЫ',title:'ЛИДЕР ПО КОРОНАМ',unit:'корон',val:p=>stOf(p).crowns,cap:()=>'корон',row:()=>'Короны'},
+ defense:{tab:'ЗАЩИТА ЗДАНИЙ',title:'ЛУЧШАЯ ЗАЩИТА ЗДАНИЙ',unit:'зданий',val:p=>stOf(p).defense,cap:p=>`зданий защищено из ${stOf(p).bld}`,row:p=>`из ${stOf(p).bld} зданий`}
 };
 const evoBox=inner=>`<div class="evo"><div class="evo-edge"></div><div class="evo-in">${inner}</div><div class="evo-glow"></div></div>`;
 function evoFrame(p){return evoBox(p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="evo-ph">${esc(initial(p.nick||p.name))}</span>`)}
@@ -526,33 +575,32 @@ function banSection(full){
 }
 function statSection(key,full){
  const d=STAT_DEFS[key];
- const sorted=[...data.players].sort((a,b)=>d.val(b)-d.val(a));
- const best=sorted[0];
- const rows=sorted.slice(1,full?sorted.length:5);
- return `<section class="panel statsec"><div class="panelhead"><span>${d.tab}</span>${full?'':`<button class="allbtn" data-stat="${key}">Все ›</button>`}</div>`+
- `<div class="leader"><div class="leader-top">${d.title}</div><div class="leader-body"><div class="leader-who">${evoFrame(best)}<div class="leader-name">${esc(nickOf(best))}</div></div><div class="leader-val"><div class="statbig leader-num">${d.val(best)}</div><div class="small">${d.cap(best)}</div></div></div></div>`+
+ const sorted=[...data.players].sort((x,y)=>d.val(y)-d.val(x));
+ const has=d.val(sorted[0])>0,best=has?sorted[0]:null;
+ const rows=has?sorted.slice(1,full?sorted.length:5):[];
+ return `<section class="panel statsec"><div class="panelhead"><span>${d.tab}</span>${full||!has?'':`<button class="allbtn" data-stat="${key}">Все ›</button>`}</div>`+
+ `<div class="leader"><div class="leader-top">${d.title}</div><div class="leader-body"><div class="leader-who">${best?evoFrame(best):evoBox('<span class="evo-ph">?</span>')}<div class="leader-name">${best?esc(nickOf(best)):'—'}</div></div><div class="leader-val"><div class="statbig leader-num">${best?d.val(best):0}</div><div class="small">${best?d.cap(best):d.unit}</div></div></div></div>`+
  rows.map((p,i)=>`<div class="statline"><div class="rank">${i+2}</div><div><div class="pname">${esc(nickOf(p))}</div><div class="small">${d.row(p)}</div></div><div class="value">${d.val(p)}</div></div>`).join('')+
- `</section>`;
-}
-function adminStatSection(key){
- const d=STAT_DEFS[key];
- return `<section class="panel statsec"><div class="panelhead"><span>${d.tab}</span><span style="color:#ffe36a">✎ ИЗМЕНИТЬ</span></div>`+
- data.players.map(p=>`<div class="statline edrow"><div><div class="pname">${esc(nickOf(p))}</div><div class="small">${esc(p.name)}</div></div>${key==='card'?`<div class="edgroup">${edText(`p:${p.id}:favoriteCard`,p.favoriteCard||'','','Карта','list="cardlist"')}${edNum(`p:${p.id}:cardUses`,p.cardUses||0)}</div>`:`<div class="edgroup narrow">${edNum(`p:${p.id}:${d.field}`,d.val(p))}</div>`}</div>`).join('')+
+ (has?'':'<div class="empty">Данных пока нет: они появятся после ввода результатов встреч в таблице.</div>')+
  `</section>`;
 }
 function renderStats(){
- const view=data.statsView||'all';
- const keys=view==='all'?['crowns','defense','card','bans']:[view];
- const tabs=[['all','ВСЕ'],['crowns','КОРОНЫ'],['defense','ЗАЩИТА'],['card','КАРТЫ'],['bans','БАНЫ']];
- return title('РЕЙТИНГ ИГРОКОВ','СТАТИСТИКА','Авторасчёт')+editBanner()+`<div class="subtabs">${tabs.map(([k,v])=>`<button data-stat="${k}" class="${k===view?'active':''}">${v}</button>`).join('')}</div>`+keys.map(k=>k==='bans'?banSection(view!=='all'):isAdmin?adminStatSection(k):statSection(k,view!=='all')).join('')+(isAdmin&&keys.includes('card')?`<datalist id="cardlist">${CARDS_SORTED.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`:'');
+ const tabs=[['all','ВСЕ'],['crowns','КОРОНЫ'],['defense','ЗАЩИТА'],['bans','БАНЫ']];
+ let view=data.statsView||'all';if(!tabs.some(t=>t[0]===view))view='all';
+ const keys=view==='all'?['crowns','defense','bans']:[view];
+ const note=isAdmin?`<div class="editbanner info"><span class="pen">ⓘ</span><span>Статистика считается сама по результатам встреч во вкладке «Таблица»: короны, защита зданий и баны. Здесь вводить ничего не нужно.</span></div>`:'';
+ return title('РЕЙТИНГ ИГРОКОВ','СТАТИСТИКА','Авторасчёт')+note+`<div class="subtabs">${tabs.map(([k,v])=>`<button data-stat="${k}" class="${k===view?'active':''}">${v}</button>`).join('')}</div>`+keys.map(k=>k==='bans'?banSection(view!=='all'):statSection(k,view!=='all')).join('');
 }
 function adminSettings(){
  return `<section class="panel" style="margin-top:18px"><div class="panelhead"><span>НАСТРОЙКИ РАЗРАБОТЧИКА</span></div><div class="settingsbody"><div class="edlabel">НОВЫЙ КОД РАЗРАБОТЧИКА</div><span class="ed-wrap"><input class="ed" id="newpin" type="password" placeholder="Минимум 4 символа" autocomplete="new-password"></span><div class="actions"><button class="secondary" id="savepin">ИЗМЕНИТЬ КОД</button><button class="secondary" id="export">ЭКСПОРТ JSON</button><label class="secondary" for="importfile">ИМПОРТ JSON</label><input class="hidden" id="importfile" type="file" accept="application/json"></div><p class="hint">Данные хранятся в браузере. Для синхронизации между устройствами понадобится серверная база данных. Код доступа в статическом сайте не является полноценной защитой.</p></div></section>`;
 }
 function renderRating(){
- if(isAdmin)return title('ИСТОРИЯ СОРЕВНОВАНИЯ','РЕЙТИНГ','16 игроков')+editBanner()+`<section class="panel tablewrap"><table class="ratingtable"><thead><tr><th>#</th><th>ИГРОК</th><th>СЕЗОН</th><th>ВСЕГО</th></tr></thead><tbody>${data.players.map(p=>`<tr><td>${p.id}</td><td><b>${esc(nickOf(p))}</b></td><td>${edNum(`p:${p.id}:season`,p.season,'sm')}</td><td>${edNum(`p:${p.id}:total`,p.total,'sm')}</td></tr>`).join('')}</tbody></table></section>`+adminSettings();
- let arr=[...data.players].sort((a,b)=>b.season-a.season||b.total-a.total);
- return title('ИСТОРИЯ СОРЕВНОВАНИЯ','РЕЙТИНГ','16 игроков')+`<section class="panel tablewrap"><table class="ratingtable"><thead><tr><th>#</th><th>ИГРОК</th><th>СЕЗОН</th><th>ВСЕГО</th></tr></thead><tbody>${arr.map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(nickOf(p))}</b></td><td><strong>${p.season}</strong></td><td><strong>${p.total}</strong></td></tr>`).join('')}</tbody></table></section><p class="hint">Очки за текущий сезон и общая сумма редактируются в режиме разработчика.</p>`;
+ const arr=[...data.players].sort((x,y)=>stOf(y).pts-stOf(x).pts);
+ const fmt=n=>(n/100).toFixed(2);
+ const note=isAdmin?`<div class="editbanner info"><span class="pen">ⓘ</span><span>Рейтинг считается сам по результатам во вкладке «Таблица». Здесь вводить ничего не нужно.</span></div>`:'';
+ const table=`<section class="panel tablewrap"><table class="ratingtable"><thead><tr><th>#</th><th>ИГРОК</th><th>РЕЙТИНГ</th></tr></thead><tbody>${arr.map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(nickOf(p))}</b></td><td><strong>${fmt(stOf(p).pts)}</strong></td></tr>`).join('')}</tbody></table></section>`;
+ const how=`<section class="panel rulebox"><div class="edlabel">КАК СЧИТАЕТСЯ РЕЙТИНГ</div><ul><li>0.10 за каждое сломанное здание (корону)</li><li>0.10 за каждое защищённое здание</li><li>+0.60 победителю серии 2:0</li><li>Досрочный выход в плей-офф: +3.60 со стадии 3:0, +1.80 со стадии 3:1</li><li>Места в плей-офф: 1 место +5, 2 место +3, 3 место +1</li></ul></section>`;
+ return title('ИСТОРИЯ СОРЕВНОВАНИЯ','РЕЙТИНГ','16 игроков')+note+table+how+(isAdmin?adminSettings():'');
 }
 
 /* ---------- events ---------- */
